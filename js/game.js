@@ -1,7 +1,7 @@
 import { Player } from './player.js';
 import { Weapon } from './weapon.js';
 import { EnemySpawner } from './enemy.js';
-import { XPGem } from './xp.js';
+import { XPGem, GEM_TYPE } from './xp.js';
 import { checkCircleCollision } from './collision.js';
 import { formatTime, shuffle } from './utils.js';
 import { Input } from './input.js';
@@ -13,6 +13,9 @@ export const GAME_STATE = {
     LEVELUP: 'LEVELUP',
     GAMEOVER: 'GAMEOVER'
 };
+
+export const FOOD_DROP_CHANCE = 0.05;
+export const FOOD_DROP_VALUE = 20;
 
 export class Game {
     constructor(canvas, input) {
@@ -252,6 +255,11 @@ export class Game {
                             if (enemy.toRemove) {
                                 this.killCount++;
                                 this.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpDrop));
+                                
+                                // 5% chance of food drop
+                                if (Math.random() < FOOD_DROP_CHANCE) {
+                                    this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
+                                }
                             }
                         }
                     });

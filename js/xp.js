@@ -1,12 +1,18 @@
 import { distance } from './utils.js';
 
+export const GEM_TYPE = {
+    XP: 'XP',
+    FOOD: 'FOOD'
+};
+
 export class XPGem {
-    constructor(x, y, value) {
+    constructor(x, y, value, type = GEM_TYPE.XP) {
         this.x = x;
         this.y = y;
         this.value = value;
+        this.type = type;
         this.radius = 8;
-        this.color = '#32CD32'; // LimeGreen
+        this.color = type === GEM_TYPE.FOOD ? '#9370DB' : '#32CD32'; // Purple vs LimeGreen
         this.toRemove = false;
         
         this.pickupRange = 100;
@@ -26,8 +32,13 @@ export class XPGem {
             this.x += Math.cos(angle) * this.magneticSpeed * deltaTimeFactor;
             this.y += Math.sin(angle) * this.magneticSpeed * deltaTimeFactor;
             
-            if (dist < player.radius + this.radius) {
-                player.addXP(this.value);
+            const currentDist = distance(this.x, this.y, player.x, player.y);
+            if (currentDist < player.radius + this.radius) {
+                if (this.type === GEM_TYPE.FOOD) {
+                    player.heal(this.value);
+                } else {
+                    player.addXP(this.value);
+                }
                 this.toRemove = true;
             }
         }

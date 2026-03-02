@@ -1,4 +1,7 @@
 export class Player {
+    static IFRAME_DURATION = 0.5; // seconds
+    static FLASH_INTERVAL = 0.1; // seconds
+
     constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -12,12 +15,11 @@ export class Player {
         
         this.level = 1;
         this.xp = 0;
-        this.xpToNextLevel = 10;
+        this.xpToNextLevel = 8;
         this.pendingLevelUps = 0;
         this.onLevelUp = null;
         
         this.invincibilityTime = 0; // Current remaining i-frames
-        this.iFrameDuration = 0.5; // seconds
         this.flashTimer = 0;
         
         this.isDead = false;
@@ -38,7 +40,7 @@ export class Player {
 
         if (this.invincibilityTime > 0) {
             this.invincibilityTime -= deltaTime / 1000;
-            this.flashTimer += deltaTime;
+            this.flashTimer += deltaTime / 1000;
         } else {
             this.flashTimer = 0;
         }
@@ -54,11 +56,15 @@ export class Player {
         }
     }
 
+    heal(amount) {
+        this.hp = Math.min(this.maxHp, this.hp + amount);
+    }
+
     takeDamage(amount) {
         if (this.invincibilityTime > 0 || this.isDead) return;
         
         this.hp -= amount;
-        this.invincibilityTime = this.iFrameDuration;
+        this.invincibilityTime = Player.IFRAME_DURATION;
         
         if (this.hp <= 0) {
             this.hp = 0;
@@ -72,7 +78,7 @@ export class Player {
         ctx.arc(this.x - camera.x, this.y - camera.y, this.radius, 0, Math.PI * 2);
         
         // Flash if invincible
-        if (this.invincibilityTime > 0 && Math.floor(this.flashTimer / 100) % 2 === 0) {
+        if (this.invincibilityTime > 0 && Math.floor(this.flashTimer / Player.FLASH_INTERVAL) % 2 === 0) {
             ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
         } else {
             ctx.fillStyle = this.color;
