@@ -100,10 +100,10 @@ export class Game {
                 const buttons = Array.from(this.dom.upgradeOptions.querySelectorAll('button'));
                 const currentIndex = buttons.indexOf(document.activeElement);
 
-                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'a') {
                     const nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
                     buttons[nextIndex]?.focus();
-                } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'd') {
                     const nextIndex = (currentIndex + 1) % buttons.length;
                     buttons[nextIndex]?.focus();
                 }
