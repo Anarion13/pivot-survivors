@@ -5,6 +5,7 @@ import { XPGem, GEM_TYPE } from './xp.js';
 import { checkCircleCollision } from './collision.js';
 import { formatTime, shuffle } from './utils.js';
 import { Input } from './input.js';
+import { DIFFICULTY, DIFFICULTY_CONFIG } from './difficulty.js';
 
 export const GAME_STATE = {
     START: 'START',
@@ -14,7 +15,6 @@ export const GAME_STATE = {
     GAMEOVER: 'GAMEOVER'
 };
 
-export const FOOD_DROP_CHANCE = 0.05;
 export const FOOD_DROP_VALUE = 20;
 
 export class Game {
@@ -23,25 +23,26 @@ export class Game {
         this.ctx = canvas.getContext('2d');
         this.input = input;
         this.state = GAME_STATE.START;
-        
+
         this.camera = { x: 0, y: 0 };
         this.shakeTime = 0;
         this.shakeIntensity = 0;
-        
+
         this.player = null;
         this.weapon = null;
         this.spawner = null;
-        
+
         this.enemies = [];
         this.projectiles = [];
         this.xpGems = [];
-        
+
         this.gridSize = 200;
         this.grid = new Map();
-        
+
         this.elapsedTime = 0;
         this.killCount = 0;
-        
+
+        this.difficulty = DIFFICULTY.NORMAL;
         this.upgradeRanks = this.getInitialUpgradeRanks();
 
         // Cache DOM elements to avoid repetitive lookups
@@ -94,6 +95,16 @@ export class Game {
         document.getElementById('restart-button').onclick = () => this.start();
         document.getElementById('restart-pause-button').onclick = () => this.start();
 
+        // Difficulty selection
+        const difficultyButtons = document.querySelectorAll('.difficulty-button');
+        difficultyButtons.forEach(button => {
+            button.onclick = () => {
+                difficultyButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                this.difficulty = button.getAttribute('data-difficulty');
+            };
+        });
+
         // Keyboard navigation for level-up screen
         window.addEventListener('keydown', (e) => {
             if (this.state === GAME_STATE.LEVELUP) {
@@ -121,29 +132,29 @@ export class Game {
             this.input.destroy();
         }
         this.input = new Input();
-        
+
         this.player = new Player(0, 0);
         this.player.onLevelUp = () => this.handleLevelUp();
-        
+
         this.weapon = new Weapon(this.player);
-        this.spawner = new EnemySpawner(this);
+        this.spawner = new EnemySpawner(this, this.difficulty);
         this.enemies = [];
         this.projectiles = [];
         this.xpGems = [];
         this.elapsedTime = 0;
         this.killCount = 0;
-        
+
         this.upgradeRanks = this.getInitialUpgradeRanks();
 
         this.state = GAME_STATE.PLAYING;
-        
+
         // Hide screens
         this.dom.startScreen.classList.add('hidden');
         this.dom.gameoverScreen.classList.add('hidden');
         this.dom.pauseScreen.classList.add('hidden');
         this.dom.levelupScreen.classList.add('hidden');
         this.dom.hud.classList.remove('hidden');
-        
+
         this.updateHUD(true);
     }
 
@@ -346,9 +357,10 @@ export class Game {
                             if (enemy.toRemove) {
                                 this.killCount++;
                                 this.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpDrop));
-                                
-                                // 5% chance of food drop
-                                if (Math.random() < FOOD_DROP_CHANCE) {
+
+                                // Food drop chance based on difficulty
+                                const foodDropChance = DIFFICULTY_CONFIG[this.difficulty].foodDropChance;
+                                if (Math.random() < foodDropChance) {
                                     this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
                                 }
                             }

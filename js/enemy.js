@@ -1,4 +1,5 @@
 import { distance } from './utils.js';
+import { DIFFICULTY_CONFIG } from './difficulty.js';
 
 export class Enemy {
     constructor(x, y, stats = {}) {
@@ -41,24 +42,27 @@ export class Enemy {
 }
 
 export class EnemySpawner {
-    constructor(game) {
+    constructor(game, difficulty) {
         this.game = game;
-        this.spawnRate = 1.0; // enemies per second
+        this.difficulty = difficulty;
+        const config = DIFFICULTY_CONFIG[difficulty];
+        this.spawnRate = 1.0 * config.spawnRateMultiplier; // enemies per second
         this.spawnTimer = 0;
         this.scalingInterval = 30; // seconds
         this.lastScalingTime = 0;
         this.maxEnemies = 200;
+        this.spawnScalingMultiplier = config.spawnScalingMultiplier;
     }
 
     update(deltaTime) {
         this.spawnTimer += deltaTime / 1000;
-        
-        // Scale spawn rate
+
+        // Scale spawn rate based on difficulty
         if (this.game.elapsedTime - this.lastScalingTime >= this.scalingInterval) {
-            this.spawnRate *= 1.2;
+            this.spawnRate *= this.spawnScalingMultiplier;
             this.lastScalingTime = this.game.elapsedTime;
         }
-        
+
         if (this.spawnTimer >= 1 / this.spawnRate) {
             this.spawnTimer = 0;
             if (this.game.enemies.length < this.maxEnemies) {
@@ -71,16 +75,18 @@ export class EnemySpawner {
         const player = this.game.player;
         const radius = Math.max(this.game.canvas.width, this.game.canvas.height) * 0.7;
         const angle = Math.random() * Math.PI * 2;
-        
+
         const spawnX = player.x + Math.cos(angle) * radius;
         const spawnY = player.y + Math.sin(angle) * radius;
-        
-        // Base stats
+
+        const config = DIFFICULTY_CONFIG[this.difficulty];
+
+        // Base stats with difficulty scaling
         let stats = {
             radius: 15,
-            hp: 20,
+            hp: Math.floor(20 * config.enemyHealthMultiplier),
             speed: 2,
-            damage: 5,
+            damage: Math.floor(5 * config.enemyDamageMultiplier),
             xpDrop: 1,
             color: 'red'
         };
@@ -89,18 +95,18 @@ export class EnemySpawner {
         if (this.game.elapsedTime > 60) {
             const scaleFactor = 1.5;
             const speedBoost = 1.1;
-            
+
             // Introduce tougher variant randomly or as progression
             if (Math.random() > 0.8) {
                 stats.radius = 20;
-                stats.hp = Math.floor(20 * scaleFactor);
+                stats.hp = Math.floor(20 * scaleFactor * config.enemyHealthMultiplier);
                 stats.speed = 2 * speedBoost;
-                stats.damage = 8;
+                stats.damage = Math.floor(8 * config.enemyDamageMultiplier);
                 stats.xpDrop = 3;
                 stats.color = '#8B0000'; // Dark red
             }
         }
-        
+
         this.game.enemies.push(new Enemy(spawnX, spawnY, stats));
     }
 }
