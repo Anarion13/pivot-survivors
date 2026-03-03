@@ -42,6 +42,8 @@ export class Game {
         this.elapsedTime = 0;
         this.killCount = 0;
         
+        this.upgradeRanks = this.getInitialUpgradeRanks();
+
         // Cache DOM elements to avoid repetitive lookups
         this.dom = {
             hpBar: document.getElementById('hp-bar'),
@@ -71,11 +73,42 @@ export class Game {
         window.addEventListener('resize', () => this.resize());
     }
 
+    getInitialUpgradeRanks() {
+        return {
+            damage: 0,
+            fireRate: 0,
+            projectileCount: 0,
+            projectileSpeed: 0,
+            magnet: 0,
+            growth: 0,
+            revival: 0,
+            armor: 0,
+            maxHealth: 0,
+            area: 0
+        };
+    }
+
     setupUI() {
         document.getElementById('start-button').onclick = () => this.start();
         document.getElementById('resume-button').onclick = () => this.resume();
         document.getElementById('restart-button').onclick = () => this.start();
         document.getElementById('restart-pause-button').onclick = () => this.start();
+
+        // Keyboard navigation for level-up screen
+        window.addEventListener('keydown', (e) => {
+            if (this.state === GAME_STATE.LEVELUP) {
+                const buttons = Array.from(this.dom.upgradeOptions.querySelectorAll('button'));
+                const currentIndex = buttons.indexOf(document.activeElement);
+
+                if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    const nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+                    buttons[nextIndex]?.focus();
+                } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+                    const nextIndex = (currentIndex + 1) % buttons.length;
+                    buttons[nextIndex]?.focus();
+                }
+            }
+        });
     }
 
     resize() {
@@ -100,6 +133,8 @@ export class Game {
         this.elapsedTime = 0;
         this.killCount = 0;
         
+        this.upgradeRanks = this.getInitialUpgradeRanks();
+
         this.state = GAME_STATE.PLAYING;
         
         // Hide screens
@@ -135,27 +170,83 @@ export class Game {
         optionsContainer.innerHTML = '';
         
         const upgrades = [
-            { type: 'damage', name: 'Damage +10' },
-            { type: 'fireRate', name: 'Fire Rate +15%' },
-            { type: 'projectileCount', name: '+1 Projectile' },
-            { type: 'projectileSpeed', name: 'Projectile Speed +20%' }
+            { id: 'damage', name: 'Damage +10', maxRank: Infinity },
+            { id: 'fireRate', name: 'Fire Rate +15%', maxRank: Infinity },
+            { id: 'projectileCount', name: '+1 Projectile', maxRank: Infinity },
+            { id: 'projectileSpeed', name: 'Projectile Speed +20%', maxRank: Infinity },
+            { id: 'magnet', name: 'Magnet: Pickup Range +25%', maxRank: 2 },
+            { id: 'growth', name: 'Growth: XP Gain +3%', maxRank: 5 },
+            { id: 'revival', name: 'Revival: One-time 50% HP Revive', maxRank: 1 },
+            { id: 'armor', name: 'Armor: Reduce Damage by 1', maxRank: 3 },
+            { id: 'maxHealth', name: 'Max Health +10%', maxRank: 3 },
+            { id: 'area', name: 'Area +5%', maxRank: 2 }
         ];
 
+        // Filter out maxed upgrades
+        let availableUpgrades = upgrades.filter(u => this.upgradeRanks[u.id] < u.maxRank);
+
+        // Fallback if all upgrades are maxed
+        if (availableUpgrades.length === 0) {
+            availableUpgrades = [{ id: 'fallback', name: 'Full Heal', maxRank: Infinity }];
+        }
+
         // Pick 3 random
-        const shuffled = shuffle([...upgrades]);
+        const shuffled = shuffle([...availableUpgrades]);
         const selected = shuffled.slice(0, 3);
 
-        selected.forEach(upgrade => {
-            const btn = document.createElement('div');
+        selected.forEach((upgrade, index) => {
+            const btn = document.createElement('button');
             btn.className = 'upgrade-option';
             btn.innerText = upgrade.name;
             btn.onclick = () => {
-                this.weapon.applyUpgrade(upgrade.type);
+                this.applyUpgrade(upgrade.id);
                 this.state = GAME_STATE.PLAYING;
                 this.dom.levelupScreen.classList.add('hidden');
             };
             optionsContainer.appendChild(btn);
+            
+            // Auto-focus the first button for keyboard accessibility
+            if (index === 0) btn.focus();
         });
+    }
+
+    applyUpgrade(upgradeId) {
+        if (upgradeId !== 'fallback') {
+            this.upgradeRanks[upgradeId]++;
+        }
+
+        switch (upgradeId) {
+            case 'damage':
+            case 'fireRate':
+            case 'projectileCount':
+            case 'projectileSpeed':
+            case 'area':
+                this.weapon.applyUpgrade(upgradeId);
+                break;
+            case 'magnet':
+                // Additive based on initial pickup range (100)
+                this.player.pickupRange += 25;
+                break;
+            case 'growth':
+                this.player.xpMultiplier += 0.03;
+                break;
+            case 'revival':
+                this.player.revivals += 1;
+                break;
+            case 'armor':
+                this.player.armor += 1;
+                break;
+            case 'maxHealth':
+                const oldMax = this.player.maxHp;
+                this.player.maxHpMultiplier += 0.1;
+                this.player.maxHp = Math.round(100 * this.player.maxHpMultiplier);
+                // Proportional health scaling
+                this.player.hp = (this.player.hp / oldMax) * this.player.maxHp;
+                break;
+            case 'fallback':
+                this.player.hp = this.player.maxHp;
+                break;
+        }
     }
 
     update(deltaTime, deltaTimeFactor) {

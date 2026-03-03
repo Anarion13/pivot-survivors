@@ -9,6 +9,7 @@ export class Weapon {
         this.projectileCount = 1;
         this.projectileSize = 5;
         this.projectileSpread = 0.1;
+        this.areaMultiplier = 1.0;
         
         this.fireTimer = 0;
     }
@@ -19,13 +20,18 @@ export class Weapon {
                 this.damage += 10;
                 break;
             case 'fireRate':
-                this.fireRate *= 1.15;
+                // Additive scaling based on base fireRate (1.0)
+                this.fireRate += 0.15;
                 break;
             case 'projectileCount':
                 this.projectileCount += 1;
                 break;
             case 'projectileSpeed':
-                this.projectileSpeed *= 1.2;
+                // Additive scaling based on base speed (7.0)
+                this.projectileSpeed += 1.4;
+                break;
+            case 'area':
+                this.areaMultiplier += 0.05;
                 break;
         }
     }
@@ -75,7 +81,7 @@ export class Weapon {
                 angle, 
                 this.projectileSpeed, 
                 this.damage, 
-                this.projectileSize
+                this.projectileSize * this.areaMultiplier
             ));
         }
     }

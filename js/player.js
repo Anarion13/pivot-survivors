@@ -13,65 +13,80 @@ export class Player {
         this.hp = 100;
         this.speed = 4; // pixels per frame (at 60fps)
         
-        this.level = 1;
-        this.xp = 0;
-        this.xpToNextLevel = 8;
-        this.pendingLevelUps = 0;
-        this.onLevelUp = null;
+                // Perk Stats
+                this.pickupRange = 100;
+                this.xpMultiplier = 1.0;
+                this.revivals = 0;
+                this.armor = 0;
+                this.maxHpMultiplier = 1.0;
+                this.healingMultiplier = 1.0;
+                
+                this.level = 1;
+                this.xp = 0;
+                this.xpToNextLevel = 8;
+                this.pendingLevelUps = 0;
+                this.onLevelUp = null;
+                
+                this.invincibilityTime = 0; // Current remaining i-frames
+                this.flashTimer = 0;
+                
+                this.isDead = false;
+            }
         
-        this.invincibilityTime = 0; // Current remaining i-frames
-        this.flashTimer = 0;
+            update(input, deltaTime, deltaTimeFactor) {
+                if (this.isDead) return;
         
-        this.isDead = false;
-    }
-
-    update(input, deltaTime, deltaTimeFactor) {
-        if (this.isDead) return;
-
-        // Check for pending level ups
-        if (this.pendingLevelUps > 0) {
-            this.pendingLevelUps--;
-            this.onLevelUp?.();
-        }
-
-        const move = input.getMovement();
-        this.x += move.x * this.speed * deltaTimeFactor;
-        this.y += move.y * this.speed * deltaTimeFactor;
-
-        if (this.invincibilityTime > 0) {
-            this.invincibilityTime -= deltaTime / 1000;
-            this.flashTimer += deltaTime / 1000;
-        } else {
-            this.flashTimer = 0;
-        }
-    }
-
-    addXP(amount) {
-        this.xp += amount;
-        while (this.xp >= this.xpToNextLevel) {
-            this.xp -= this.xpToNextLevel;
-            this.level++;
-            this.xpToNextLevel = Math.floor(10 * Math.pow(this.level, 1.5));
-            this.pendingLevelUps += 1;
-        }
-    }
-
-    heal(amount) {
-        this.hp = Math.min(this.maxHp, this.hp + amount);
-    }
-
-    takeDamage(amount) {
-        if (this.invincibilityTime > 0 || this.isDead) return;
+                // Check for pending level ups
+                if (this.pendingLevelUps > 0) {
+                    this.pendingLevelUps--;
+                    this.onLevelUp?.();
+                }
         
-        this.hp -= amount;
-        this.invincibilityTime = Player.IFRAME_DURATION;
+                const move = input.getMovement();
+                this.x += move.x * this.speed * deltaTimeFactor;
+                this.y += move.y * this.speed * deltaTimeFactor;
         
-        if (this.hp <= 0) {
-            this.hp = 0;
-            this.isDead = true;
-        }
-    }
-
+                if (this.invincibilityTime > 0) {
+                    this.invincibilityTime -= deltaTime / 1000;
+                    this.flashTimer += deltaTime / 1000;
+                } else {
+                    this.flashTimer = 0;
+                }
+            }
+        
+            addXP(amount) {
+                this.xp += amount * this.xpMultiplier;
+                while (this.xp >= this.xpToNextLevel) {
+                    this.xp -= this.xpToNextLevel;
+                    this.level++;
+                    this.xpToNextLevel = Math.floor(10 * Math.pow(this.level, 1.5));
+                    this.pendingLevelUps += 1;
+                }
+            }
+        
+            heal(amount) {
+                this.hp = Math.min(this.maxHp, this.hp + amount);
+            }
+        
+            takeDamage(amount) {
+                if (this.invincibilityTime > 0 || this.isDead) return;
+                
+                const actualDamage = Math.max(1, amount - this.armor);
+                this.hp -= actualDamage;
+                this.invincibilityTime = Player.IFRAME_DURATION;
+                
+                if (this.hp <= 0) {
+                    if (this.revivals > 0) {
+                        this.revivals--;
+                        this.hp = this.maxHp / 2;
+                        // Use Math.max to prevent overwriting longer existing iframes
+                        this.invincibilityTime = Math.max(this.invincibilityTime, Player.IFRAME_DURATION * 2);
+                    } else {
+                        this.hp = 0;
+                        this.isDead = true;
+                    }
+                }
+            }
     draw(ctx, camera) {
         ctx.save();
         ctx.beginPath();

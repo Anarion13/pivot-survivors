@@ -15,7 +15,6 @@ export class XPGem {
         this.color = type === GEM_TYPE.FOOD ? '#9370DB' : '#32CD32'; // Purple vs LimeGreen
         this.toRemove = false;
         
-        this.pickupRange = 100;
         this.magneticSpeed = 8;
         this.isBeingPickedUp = false;
     }
@@ -23,7 +22,7 @@ export class XPGem {
     update(player, deltaTime, deltaTimeFactor) {
         const dist = distance(this.x, this.y, player.x, player.y);
         
-        if (!this.isBeingPickedUp && dist < this.pickupRange) {
+        if (!this.isBeingPickedUp && dist < player.pickupRange) {
             this.isBeingPickedUp = true;
         }
 
@@ -35,7 +34,7 @@ export class XPGem {
             const currentDist = distance(this.x, this.y, player.x, player.y);
             if (currentDist < player.radius + this.radius) {
                 if (this.type === GEM_TYPE.FOOD) {
-                    player.heal(this.value);
+                    player.heal(this.value * player.healingMultiplier);
                 } else {
                     player.addXP(this.value);
                 }
