@@ -1,119 +1,19 @@
-# Vampire Survivors Clone - MVP Implementation Plan
+# Pivot Survivors - MVP Implementation Plan
 
 ## Project Overview
 
-A browser-based clone of Vampire Survivors featuring core auto-battler mechanics: automatic weapon firing, wave-based enemy spawning, XP-based progression, and survival gameplay.
+A browser-based survivors-like featuring core auto-battler mechanics: automatic weapon firing, wave-based enemy spawning, XP-based progression, and survival gameplay.
 
 **Target**: Playable MVP with core game loop.
-
 ---
-
 ## Tech Stack
-
-- **Frontend**: Vanilla JavaScript (ES6 modules)
-- **Rendering**: HTML5 Canvas 2D API
-- **Project Setup**: Single HTML file with module imports, no build tools
-- **Storage**: LocalStorage for save data (if implementing persistence)
-- **Deployment**: Static hosting (GitHub Pages, Netlify, or Vercel)
-
-**Rationale**:
-- No build step or dependencies
-- Full control over game loop and rendering
-- Can migrate to framework later if needed
-
 ---
-
 ## Core Game Mechanics (MVP)
-
-### 1. Player System
-- **Movement**: WASD or Arrow keys, 8-directional movement
-- **Visual**: Colored circle (e.g., blue, radius 20px)
-- **Stats**:
-  - HP: Starting value (e.g., 100)
-  - Movement Speed: Pixels per frame
-  - No advanced stats in MVP
-
-### 2. Weapon System
-- **Starting Weapon**: Auto-firing projectile shooter
-  - Fires in nearest enemy direction (or random if no enemies)
-  - Projectile visual: Small colored circle (e.g., yellow)
-  - Projectile behavior: Travels in straight line, despawns at screen edge or on hit
-- **Weapon Stats**:
-  - Damage: Damage dealt per hit
-  - Fire Rate: Shots per second
-  - Projectile Speed: Pixels per frame
-  - Projectile Count: Number of simultaneous projectiles (starts at 1)
-  - Projectile Size: Visual size and hitbox radius
-- **Upgrade System**: On level up, player chooses one weapon stat to improve
-  - Damage +10
-  - Fire Rate +15%
-  - +1 Projectile
-  - Projectile Speed +20%
-
-### 3. Enemy System
-- **Spawning**:
-  - Enemies spawn at random positions outside visible screen
-  - Spawn rate increases over time (every 30 seconds, spawn rate multiplies by 1.2)
-  - Enemy count cap to prevent performance issues (e.g., max 200 active enemies)
-- **Enemy Behavior**:
-  - Simple chase AI: Move directly toward player at constant speed
-  - Deal damage on collision with player (contact damage)
-- **Enemy Types**:
-  - **Basic Enemy**:
-    - Visual: Red circle, radius 15px
-    - HP: 20
-    - Speed: 2 pixels/frame
-    - Damage: 5
-    - XP Drop: 1
-- **Enemy Scaling**: After 60 seconds, introduce tougher enemy variant
-  - HP multiplied by 1.5
-  - Speed increased by 10%
-  - Visual: Larger red circle
-
-### 4. Combat System
-- **Collision Detection**:
-  - Circle-to-circle collision (player, enemies, projectiles)
-  - Check distance between centers: `distance < radius1 + radius2`
-- **Damage System**:
-  - Projectile hits enemy → Deal weapon damage, destroy projectile
-  - Enemy touches player → Deal contact damage, apply short invincibility frames (0.5s)
-- **Death**:
-  - Player: HP ≤ 0 → Game Over screen
-  - Enemy: HP ≤ 0 → Drop XP gem, remove from game
-
-### 5. XP and Leveling System
-- **XP Gems**:
-  - Visual: Green circle, radius 8px
-  - Drop at enemy death position
-  - Automatically move toward player when within pickup range (e.g., 100px)
-  - Collected on contact with player
-- **Leveling**:
-  - XP required scales: `XP_needed = base * (level ^ 1.5)` (e.g., base = 10)
-  - On level up:
-    1. Pause game
-    2. Show 3 random weapon upgrade options
-    3. Player selects one
-    4. Resume game
-- **Level Cap**: None
-
-### 6. Game Loop and Timing
-- **Game Loop**:
-  - Use `requestAnimationFrame` for smooth 60 FPS
-  - Delta time tracking for frame-independent movement
-- **Game States**:
-  - `START`: Main menu / start screen
-  - `PLAYING`: Active gameplay
-  - `PAUSED`: Pause menu
-  - `LEVELUP`: Level-up selection screen (game paused)
-  - `GAMEOVER`: Death screen with stats
-- **Time Tracking**: Track elapsed game time (survival time) for stats
-
 ---
-
 ## File Structure
 
 ```
-vampire-survivors-clone/
+pivot-survivors/
 ├── index.html              # Main HTML entry point
 ├── styles.css              # UI and canvas styling
 ├── js/
