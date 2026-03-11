@@ -10,7 +10,7 @@ export class Input {
         this.keyDownHandler = (e) => {
             if (this.gameKeys.includes(e.code)) {
                 e.preventDefault();
-            }
+            }fdsa
             this.keys[e.code] = true;
         };
         this.keyUpHandler = (e) => {
