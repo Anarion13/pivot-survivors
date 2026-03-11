@@ -1,6 +1,6 @@
 import { Player } from './player.js';
 import { Weapon } from './weapon.js';
-import { EnemySpawner } from './enemy.js';
+import { EnemySpawner, ENEMY_TYPE } from './enemy.js';
 import { XPGem, GEM_TYPE } from './xp.js';
 import { checkCircleCollision } from './collision.js';
 import { formatTime, shuffle } from './utils.js';
@@ -16,6 +16,10 @@ export const GAME_STATE = {
 
 export const FOOD_DROP_CHANCE = 0.05;
 export const FOOD_DROP_VALUE = 20;
+export const SPEED_DROP_CHANCE = 0.03;
+export const SPEED_DROP_DURATION = 5;
+export const SHIELD_DROP_CHANCE = 0.02;
+export const SHIELD_DROP_DURATION = 3;
 
 export class Game {
     constructor(canvas, input) {
@@ -34,6 +38,7 @@ export class Game {
         
         this.enemies = [];
         this.projectiles = [];
+        this.enemyProjectiles = [];
         this.xpGems = [];
         
         this.gridSize = 200;
@@ -129,6 +134,7 @@ export class Game {
         this.spawner = new EnemySpawner(this);
         this.enemies = [];
         this.projectiles = [];
+        this.enemyProjectiles = [];
         this.xpGems = [];
         this.elapsedTime = 0;
         this.killCount = 0;
@@ -261,8 +267,15 @@ export class Game {
         this.weapon.update(deltaTime, this.enemies, this.projectiles, deltaTimeFactor);
         this.spawner.update(deltaTime);
         
-        this.enemies.forEach(enemy => enemy.update(this.player, deltaTime, deltaTimeFactor));
+        this.enemies.forEach(enemy => {
+            if (enemy.type === ENEMY_TYPE.SHOOTER) {
+                enemy.update(this.player, deltaTime, deltaTimeFactor, this.enemyProjectiles);
+            } else {
+                enemy.update(this.player, deltaTime, deltaTimeFactor);
+            }
+        });
         this.projectiles.forEach(proj => proj.update(deltaTime, deltaTimeFactor));
+        this.enemyProjectiles.forEach(proj => proj.update(deltaTime, deltaTimeFactor));
         this.xpGems.forEach(gem => gem.update(this.player, deltaTime, deltaTimeFactor));
         
         // Collision Detection
@@ -274,6 +287,7 @@ export class Game {
         // managed throughout the entire game session.
         this.enemies = this.enemies.filter(enemy => !enemy.toRemove);
         this.projectiles = this.projectiles.filter(proj => !proj.toRemove);
+        this.enemyProjectiles = this.enemyProjectiles.filter(proj => !proj.toRemove);
         this.xpGems = this.xpGems.filter(gem => !gem.toRemove);
         
         // Camera follow
@@ -313,16 +327,18 @@ export class Game {
 
         const addToGrid = (obj, type) => {
             const key = getGridKey(obj.x, obj.y);
-            if (!this.grid.has(key)) this.grid.set(key, { enemies: [], projectiles: [], player: null });
+            if (!this.grid.has(key)) this.grid.set(key, { enemies: [], projectiles: [], enemyProjectiles: [], player: null });
             const cell = this.grid.get(key);
             if (type === 'enemy') cell.enemies.push(obj);
             else if (type === 'projectile') cell.projectiles.push(obj);
+            else if (type === 'enemyProjectile') cell.enemyProjectiles.push(obj);
             else if (type === 'player') cell.player = obj;
         };
 
         // Add entities to grid
         this.enemies.forEach(e => addToGrid(e, 'enemy'));
         this.projectiles.forEach(p => addToGrid(p, 'projectile'));
+        this.enemyProjectiles.forEach(p => addToGrid(p, 'enemyProjectile'));
         addToGrid(this.player, 'player');
 
         // Projectile vs Enemy
@@ -347,9 +363,13 @@ export class Game {
                                 this.killCount++;
                                 this.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpDrop));
                                 
-                                // 5% chance of food drop
-                                if (Math.random() < FOOD_DROP_CHANCE) {
+                                const rand = Math.random();
+                                if (rand < FOOD_DROP_CHANCE) {
                                     this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
+                                } else if (rand < FOOD_DROP_CHANCE + SPEED_DROP_CHANCE) {
+                                    this.xpGems.push(new XPGem(enemy.x, enemy.y, SPEED_DROP_DURATION, GEM_TYPE.SPEED));
+                                } else if (rand < FOOD_DROP_CHANCE + SPEED_DROP_CHANCE + SHIELD_DROP_CHANCE) {
+                                    this.xpGems.push(new XPGem(enemy.x, enemy.y, SHIELD_DROP_DURATION, GEM_TYPE.SHIELD));
                                 }
                             }
                         }
@@ -374,6 +394,15 @@ export class Game {
                             this.player.takeDamage(enemy.damage);
                             this.shake(0.2, 10);
                         }
+                    }
+                });
+
+                cell.enemyProjectiles.forEach(proj => {
+                    if (proj.toRemove) return;
+                    if (checkCircleCollision(proj, this.player)) {
+                        this.player.takeDamage(proj.damage);
+                        proj.toRemove = true;
+                        this.shake(0.15, 8);
                     }
                 });
             }
@@ -402,7 +431,7 @@ export class Game {
                    obj.y > bounds.top && obj.y < bounds.bottom;
         };
 
-        // Draw entities (render order: gems -> enemies -> projectiles -> player)
+        // Draw entities (render order: gems -> enemies -> projectiles -> enemyProjectiles -> player)
         this.xpGems.forEach(gem => {
             if (isVisible(gem)) gem.draw(this.ctx, this.camera);
         });
@@ -410,6 +439,9 @@ export class Game {
             if (isVisible(enemy)) enemy.draw(this.ctx, this.camera);
         });
         this.projectiles.forEach(proj => {
+            if (isVisible(proj)) proj.draw(this.ctx, this.camera);
+        });
+        this.enemyProjectiles.forEach(proj => {
             if (isVisible(proj)) proj.draw(this.ctx, this.camera);
         });
         this.player.draw(this.ctx, this.camera);
