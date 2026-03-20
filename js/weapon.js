@@ -1,11 +1,13 @@
 import { distance } from './utils.js';
 
+const PROJECTILE_SPEED_MULTIPLIER = 0.85;
+
 export class Weapon {
     constructor(player) {
         this.player = player;
         this.damage = 10;
         this.fireRate = 1; // shots per second
-        this.projectileSpeed = 7;
+        this.projectileSpeed = 7 * PROJECTILE_SPEED_MULTIPLIER;
         this.projectileCount = 1;
         this.projectileSize = 5;
         this.projectileSpread = 0.1;
@@ -28,7 +30,7 @@ export class Weapon {
                 break;
             case 'projectileSpeed':
                 // Additive scaling based on base speed (7.0)
-                this.projectileSpeed += 1.4;
+                this.projectileSpeed += 1.4 * PROJECTILE_SPEED_MULTIPLIER;
                 break;
             case 'area':
                 this.areaMultiplier += 0.05;
