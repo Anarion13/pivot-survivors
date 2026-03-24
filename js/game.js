@@ -1,6 +1,6 @@
 import { Player } from './player.js';
 import { Weapon } from './weapon.js';
-import { EnemySpawner } from './enemy.js';
+import { Enemy, EnemySpawner } from './enemy.js';
 import { XPGem, GEM_TYPE } from './xp.js';
 import { checkCircleCollision } from './collision.js';
 import { formatTime, shuffle } from './utils.js';
@@ -346,10 +346,26 @@ export class Game {
                             if (enemy.toRemove) {
                                 this.killCount++;
                                 this.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpDrop));
-                                
+
                                 // 5% chance of food drop
                                 if (Math.random() < FOOD_DROP_CHANCE) {
                                     this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
+                                }
+
+                                // Splitter: spawn smaller children
+                                if (enemy.splitCount > 0) {
+                                    for (let i = 0; i < 2; i++) {
+                                        const offset = (i === 0 ? -1 : 1) * enemy.radius;
+                                        this.enemies.push(new Enemy(enemy.x + offset, enemy.y + offset, {
+                                            radius: Math.floor(enemy.radius * 0.6),
+                                            hp: Math.floor(enemy.hp * 0.4) || 5,
+                                            speed: enemy.speed * 1.4,
+                                            damage: Math.max(enemy.damage - 1, 1),
+                                            xpDrop: 1,
+                                            color: '#3CB371', // Medium sea green
+                                            splitCount: enemy.splitCount - 1
+                                        }));
+                                    }
                                 }
                             }
                         }
