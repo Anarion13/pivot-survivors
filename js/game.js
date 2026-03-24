@@ -16,6 +16,8 @@ export const GAME_STATE = {
 
 export const FOOD_DROP_CHANCE = 0.05;
 export const FOOD_DROP_VALUE = 20;
+export const ADRENALINE_DROP_CHANCE = 0.02;
+export const ADRENALINE_DURATION = 10;
 
 export class Game {
     constructor(canvas, input) {
@@ -350,6 +352,11 @@ export class Game {
                                 // 5% chance of food drop
                                 if (Math.random() < FOOD_DROP_CHANCE) {
                                     this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
+                                }
+
+                                // 2% chance of adrenaline drop
+                                if (Math.random() < ADRENALINE_DROP_CHANCE) {
+                                    this.xpGems.push(new XPGem(enemy.x, enemy.y, ADRENALINE_DURATION, GEM_TYPE.ADRENALINE));
                                 }
 
                                 // Splitter: spawn smaller children
