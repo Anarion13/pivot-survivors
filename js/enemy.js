@@ -11,7 +11,8 @@ export class Enemy {
         this.damage = stats.damage || 5;
         this.xpDrop = stats.xpDrop || 1;
         this.color = stats.color || 'red';
-        
+        this.splitCount = stats.splitCount || 0;
+
         this.toRemove = false;
     }
 
@@ -89,9 +90,19 @@ export class EnemySpawner {
         if (this.game.elapsedTime > 60) {
             const scaleFactor = 1.5;
             const speedBoost = 1.1;
-            
-            // Introduce tougher variant randomly or as progression
-            if (Math.random() > 0.8) {
+            const roll = Math.random();
+
+            if (roll > 0.85) {
+                // Splitter: splits into 2 smaller enemies on death
+                stats.radius = 18;
+                stats.hp = 25;
+                stats.speed = 1.6;
+                stats.damage = 4;
+                stats.xpDrop = 2;
+                stats.color = '#2E8B57'; // Sea green
+                stats.splitCount = 1;
+            } else if (roll > 0.7) {
+                // Tougher variant
                 stats.radius = 20;
                 stats.hp = Math.floor(20 * scaleFactor);
                 stats.speed = 2 * speedBoost;
