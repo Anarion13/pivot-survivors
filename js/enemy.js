@@ -13,14 +13,47 @@ export class Enemy {
         this.color = stats.color || 'red';
         this.splitCount = stats.splitCount || 0;
 
+        // Dasher properties
+        this.isDasher = stats.isDasher || false;
+        this.dashCooldown = stats.dashCooldown || 2.0; // seconds between dashes
+        this.dashSpeed = stats.dashSpeed || 8;
+        this.dashDuration = stats.dashDuration || 0.3; // seconds
+        this.dashTimer = this.dashCooldown; // time until next dash
+        this.dashTimeRemaining = 0;
+        this.dashAngle = 0;
+
         this.toRemove = false;
     }
 
     update(player, deltaTime, deltaTimeFactor) {
-        // Simple chase AI
-        const angle = Math.atan2(player.y - this.y, player.x - this.x);
-        this.x += Math.cos(angle) * this.speed * deltaTimeFactor;
-        this.y += Math.sin(angle) * this.speed * deltaTimeFactor;
+        const dt = deltaTime / 1000;
+
+        if (this.isDasher) {
+            if (this.dashTimeRemaining > 0) {
+                // Currently dashing
+                this.dashTimeRemaining -= dt;
+                this.x += Math.cos(this.dashAngle) * this.dashSpeed * deltaTimeFactor;
+                this.y += Math.sin(this.dashAngle) * this.dashSpeed * deltaTimeFactor;
+            } else {
+                // Normal movement + cooldown
+                this.dashTimer -= dt;
+                const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                this.x += Math.cos(angle) * this.speed * deltaTimeFactor;
+                this.y += Math.sin(angle) * this.speed * deltaTimeFactor;
+
+                if (this.dashTimer <= 0) {
+                    // Start a dash toward the player
+                    this.dashAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                    this.dashTimeRemaining = this.dashDuration;
+                    this.dashTimer = this.dashCooldown;
+                }
+            }
+        } else {
+            // Simple chase AI
+            const angle = Math.atan2(player.y - this.y, player.x - this.x);
+            this.x += Math.cos(angle) * this.speed * deltaTimeFactor;
+            this.y += Math.sin(angle) * this.speed * deltaTimeFactor;
+        }
     }
 
     draw(ctx, camera) {
@@ -92,7 +125,27 @@ export class EnemySpawner {
             const speedBoost = 1.1;
             const roll = Math.random();
 
-            if (roll > 0.85) {
+            if (roll > 0.92) {
+                // Tank: slow, large, high HP
+                stats.radius = 28;
+                stats.hp = Math.floor(60 * scaleFactor);
+                stats.speed = 1.0;
+                stats.damage = 12;
+                stats.xpDrop = 5;
+                stats.color = '#4B0082'; // Indigo
+            } else if (roll > 0.82) {
+                // Dasher: fast bursts toward the player
+                stats.radius = 12;
+                stats.hp = 15;
+                stats.speed = 1.4;
+                stats.damage = 6;
+                stats.xpDrop = 2;
+                stats.color = '#FF8C00'; // Dark orange
+                stats.isDasher = true;
+                stats.dashCooldown = 2.0;
+                stats.dashSpeed = 8;
+                stats.dashDuration = 0.3;
+            } else if (roll > 0.72) {
                 // Splitter: splits into 2 smaller enemies on death
                 stats.radius = 18;
                 stats.hp = 25;
@@ -101,7 +154,7 @@ export class EnemySpawner {
                 stats.xpDrop = 2;
                 stats.color = '#2E8B57'; // Sea green
                 stats.splitCount = 1;
-            } else if (roll > 0.7) {
+            } else if (roll > 0.6) {
                 // Tougher variant
                 stats.radius = 20;
                 stats.hp = Math.floor(20 * scaleFactor);
