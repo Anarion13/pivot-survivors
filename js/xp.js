@@ -2,7 +2,8 @@ import { distance } from './utils.js';
 
 export const GEM_TYPE = {
     XP: 'XP',
-    FOOD: 'FOOD'
+    FOOD: 'FOOD',
+    ADRENALINE: 'ADRENALINE'
 };
 
 export class XPGem {
@@ -12,7 +13,7 @@ export class XPGem {
         this.value = value;
         this.type = type;
         this.radius = 8;
-        this.color = type === GEM_TYPE.FOOD ? '#9370DB' : '#32CD32'; // Purple vs LimeGreen
+        this.color = type === GEM_TYPE.FOOD ? '#9370DB' : type === GEM_TYPE.ADRENALINE ? '#FF4500' : '#32CD32';
         this.toRemove = false;
         
         this.magneticSpeed = 8;
@@ -35,6 +36,8 @@ export class XPGem {
             if (currentDist < player.radius + this.radius) {
                 if (this.type === GEM_TYPE.FOOD) {
                     player.heal(this.value * player.healingMultiplier);
+                } else if (this.type === GEM_TYPE.ADRENALINE) {
+                    player.adrenalineTimer = this.value;
                 } else {
                     player.addXP(this.value);
                 }

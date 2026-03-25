@@ -20,6 +20,7 @@ export class Player {
                 this.armor = 0;
                 this.maxHpMultiplier = 1.0;
                 this.healingMultiplier = 1.0;
+                this.adrenalineTimer = 0;
                 
                 this.level = 1;
                 this.xp = 0;
@@ -51,6 +52,11 @@ export class Player {
                     this.flashTimer += deltaTime / 1000;
                 } else {
                     this.flashTimer = 0;
+                }
+
+                if (this.adrenalineTimer > 0) {
+                    this.adrenalineTimer -= deltaTime / 1000;
+                    if (this.adrenalineTimer < 0) this.adrenalineTimer = 0;
                 }
             }
         

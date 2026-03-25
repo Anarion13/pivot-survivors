@@ -39,7 +39,8 @@ export class Weapon {
     update(deltaTime, enemies, projectiles, deltaTimeFactor) {
         this.fireTimer += deltaTime / 1000;
         
-        if (this.fireTimer >= 1 / this.fireRate) {
+        const effectiveFireRate = this.player.adrenalineTimer > 0 ? this.fireRate * 2 : this.fireRate;
+        if (this.fireTimer >= 1 / effectiveFireRate) {
             this.fireTimer = 0;
             this.fire(enemies, projectiles);
         }
