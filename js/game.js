@@ -3,7 +3,7 @@ import { Weapon } from './weapon.js';
 import { Enemy, EnemySpawner } from './enemy.js';
 import { XPGem, GEM_TYPE } from './xp.js';
 import { checkCircleCollision } from './collision.js';
-import { formatTime, shuffle } from './utils.js';
+import { formatTime, shuffle, distance } from './utils.js';
 import { Input } from './input.js';
 
 export const GAME_STATE = {
@@ -263,7 +263,7 @@ export class Game {
         this.weapon.update(deltaTime, this.enemies, this.projectiles, deltaTimeFactor);
         this.spawner.update(deltaTime);
         
-        this.enemies.forEach(enemy => enemy.update(this.player, deltaTime, deltaTimeFactor));
+        this.enemies.forEach(enemy => enemy.update(this.player, deltaTime, deltaTimeFactor, this.enemies));
         this.projectiles.forEach(proj => proj.update(deltaTime, deltaTimeFactor));
         this.xpGems.forEach(gem => gem.update(this.player, deltaTime, deltaTimeFactor));
         
@@ -372,6 +372,15 @@ export class Game {
                                             color: '#3CB371', // Medium sea green
                                             splitCount: enemy.splitCount - 1
                                         }));
+                                    }
+                                }
+
+                                // Bomber: explode on death, damaging the player if in range
+                                if (enemy.isBomber) {
+                                    const dist = distance(enemy.x, enemy.y, this.player.x, this.player.y);
+                                    if (dist < enemy.explosionRadius && this.player.invincibilityTime <= 0) {
+                                        this.player.takeDamage(enemy.explosionDamage);
+                                        this.shake(0.3, 15);
                                     }
                                 }
                             }
