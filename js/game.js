@@ -16,6 +16,8 @@ export const GAME_STATE = {
 
 export const FOOD_DROP_CHANCE = 0.05;
 export const FOOD_DROP_VALUE = 20;
+export const SHIELD_DROP_CHANCE = 0.02;
+export const SHIELD_DURATION = 3; // seconds of invincibility
 
 export class Game {
     constructor(canvas, input) {
@@ -350,6 +352,11 @@ export class Game {
                                 // 5% chance of food drop
                                 if (Math.random() < FOOD_DROP_CHANCE) {
                                     this.xpGems.push(new XPGem(enemy.x, enemy.y, FOOD_DROP_VALUE, GEM_TYPE.FOOD));
+                                }
+
+                                // 2% chance of shield drop
+                                if (Math.random() < SHIELD_DROP_CHANCE) {
+                                    this.xpGems.push(new XPGem(enemy.x, enemy.y, SHIELD_DURATION, GEM_TYPE.SHIELD));
                                 }
 
                                 // Splitter: spawn smaller children

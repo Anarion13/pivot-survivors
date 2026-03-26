@@ -29,6 +29,7 @@ export class Player {
                 
                 this.invincibilityTime = 0; // Current remaining i-frames
                 this.flashTimer = 0;
+                this.shieldTime = 0; // Remaining shield duration
                 
                 this.isDead = false;
             }
@@ -46,6 +47,13 @@ export class Player {
                 this.x += move.x * this.speed * deltaTimeFactor;
                 this.y += move.y * this.speed * deltaTimeFactor;
         
+                if (this.shieldTime > 0) {
+                    this.shieldTime -= deltaTime / 1000;
+                    if (this.shieldTime > 0) {
+                        this.invincibilityTime = Math.max(this.invincibilityTime, this.shieldTime);
+                    }
+                }
+
                 if (this.invincibilityTime > 0) {
                     this.invincibilityTime -= deltaTime / 1000;
                     this.flashTimer += deltaTime / 1000;
@@ -66,6 +74,11 @@ export class Player {
         
             heal(amount) {
                 this.hp = Math.min(this.maxHp, this.hp + amount);
+            }
+
+            activateShield(duration) {
+                this.shieldTime = duration;
+                this.invincibilityTime = Math.max(this.invincibilityTime, duration);
             }
         
             takeDamage(amount) {
@@ -101,6 +114,20 @@ export class Player {
         
         ctx.fill();
         ctx.closePath();
+
+        // Draw shield bubble
+        if (this.shieldTime > 0) {
+            const alpha = Math.min(0.4, this.shieldTime / 3);
+            ctx.beginPath();
+            ctx.arc(this.x - camera.x, this.y - camera.y, this.radius + 8, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(0, 206, 209, ${alpha + 0.2})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = `rgba(0, 206, 209, ${alpha * 0.5})`;
+            ctx.fill();
+            ctx.closePath();
+        }
+
         ctx.restore();
     }
 }
