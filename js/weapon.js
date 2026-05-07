@@ -5,7 +5,7 @@ export class Weapon {
         this.player = player;
         this.damage = 10;
         this.fireRate = 1; // shots per second
-        this.projectileSpeed = 7;
+        this.projectileSpeed = 21;
         this.projectileCount = 1;
         this.projectileSize = 5;
         this.projectileSpread = 0.1;
